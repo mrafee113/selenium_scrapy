@@ -1,14 +1,11 @@
 """This module contains the ``SeleniumMiddleware`` scrapy middleware"""
 
-import validators
-
 from pyselenium_localstorage import LocalStorage
 from importlib import import_module
 from scrapy import signals
 from scrapy.exceptions import NotConfigured
 from scrapy.http import HtmlResponse
 from selenium.webdriver.support.ui import WebDriverWait
-from typing import Union
 
 from .http import SeleniumRequest
 
@@ -18,7 +15,7 @@ class SeleniumMiddleware:
 
     def __init__(self, driver_name: str, driver_executable_path: str,
                  browser_executable_path: str, command_executor, driver_arguments,
-                 driver_preferences: dict, driver_localstorage_data):
+                 driver_preferences: dict):
         """Initialize the selenium webdriver
 
         Parameters
@@ -31,8 +28,6 @@ class SeleniumMiddleware:
             A list of arguments to initialize the driver
         driver_preferences: dict
             A dictionary of key values to set preferable settings
-        driver_localstorage_data: Union[tuple[str, dict], list[tuple[str, dict]]]
-            A [list of] tuple[s] containing a url string and a localstorage kwargs.
         browser_executable_path: str
             The path of the executable binary of the browser
         command_executor: str
@@ -71,18 +66,6 @@ class SeleniumMiddleware:
             self.driver = webdriver.Remote(command_executor=command_executor,
                                            desired_capabilities=capabilities)
 
-        if not isinstance(driver_localstorage_data, list):
-            driver_localstorage_data = [driver_localstorage_data]
-        for toople in driver_localstorage_data:
-            if not isinstance(toople, (tuple, list)) or len(toople) != 2 or not validators.url(toople[0]) \
-                    or toople[1] is None:
-                continue
-            url, ls_data = toople
-            self.driver.get(url)
-            ls = LocalStorage(self.driver)
-            for k, v in ls_data.items():
-                ls.set(k, v)
-
     @classmethod
     def from_crawler(cls, crawler):
         """Initialize the middleware with the crawler settings"""
@@ -93,7 +76,6 @@ class SeleniumMiddleware:
         command_executor = crawler.settings.get('SELENIUM_COMMAND_EXECUTOR')
         driver_arguments = crawler.settings.get('SELENIUM_DRIVER_ARGUMENTS', list())
         driver_preferences = crawler.settings.get('SELENIUM_DRIVER_PREFERENCES', dict())
-        driver_localstorage_data = crawler.settings.get('SELENIUM_LOCALSTORAGE_DATA', tuple())
 
         if driver_name is None:
             raise NotConfigured('SELENIUM_DRIVER_NAME must be set')
@@ -109,7 +91,6 @@ class SeleniumMiddleware:
             command_executor=command_executor,
             driver_arguments=driver_arguments,
             driver_preferences=driver_preferences,
-            driver_localstorage_data=driver_localstorage_data
         )
 
         crawler.signals.connect(middleware.spider_closed, signals.spider_closed)
@@ -131,6 +112,14 @@ class SeleniumMiddleware:
                     'value': cookie_value
                 }
             )
+
+        if request.localstorage:
+            ls = LocalStorage(self.driver)
+            for k, v in request.localstorage.items():
+                ls.set(k, v)
+
+        if any(map(lambda x: isinstance(x, dict) and len(x), [request.cookies, request.localstorage])):
+            self.driver.refresh()
 
         if request.wait_until:
             WebDriverWait(self.driver, request.wait_time).until(
