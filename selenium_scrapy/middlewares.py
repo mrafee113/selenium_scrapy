@@ -75,7 +75,7 @@ class SeleniumMiddleware:
             driver_localstorage_data = [driver_localstorage_data]
         for toople in driver_localstorage_data:
             if not isinstance(toople, (tuple, list)) or len(toople) != 2 or not validators.url(toople[0]) \
-                    or not isinstance(toople[1], dict):
+                    or toople[1] is None:
                 continue
             url, ls_data = toople
             self.driver.get(url)
