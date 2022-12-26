@@ -6,8 +6,8 @@ from scrapy import Request
 class SeleniumRequest(Request):
     """Scrapy ``Request`` subclass providing additional arguments"""
 
-    def __init__(self, wait_time=None, wait_until=None, screenshot=False, script=None, localstorage=None,
-                 *args, **kwargs):
+    def __init__(self, wait_time=None, wait_until=None, screenshot=False, script=None, 
+                 localstorage=None, get_driver_local_storage=False, *args, **kwargs):
         """Initialize a new selenium request
 
         Parameters
@@ -24,6 +24,8 @@ class SeleniumRequest(Request):
             JavaScript code to execute.
         localstorage: dict
             Key-value pairs to set on localstorage.
+        get_driver_local_storage: bool
+            Return local storage contents from the driver.
         """
 
         self.wait_time = wait_time
@@ -31,5 +33,6 @@ class SeleniumRequest(Request):
         self.screenshot = screenshot
         self.script = script
         self.localstorage = localstorage
+        self.get_driver_local_storage = get_driver_local_storage
 
         super().__init__(*args, **kwargs)
