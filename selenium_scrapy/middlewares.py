@@ -132,6 +132,10 @@ class SeleniumMiddleware:
         if request.script:
             self.driver.execute_script(request.script)
 
+        if request.local_storage:
+            self.local_storage = self.driver.execute_script("return window.localStorage")   
+            request.meta.update({'local_storage': self.local_storage})
+
         body = str.encode(self.driver.page_source)
 
         # Expose the driver via the "meta" attribute
