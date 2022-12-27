@@ -133,6 +133,7 @@ class SeleniumMiddleware:
             self.driver.execute_script(request.script)
 
         if request.get_driver_local_storage:
+            self.driver.refresh()  # Otherwise will not return right
             self.driver_local_storage = self.driver.execute_script("return window.localStorage")   
             request.meta.update({'driver_local_storage': self.driver_local_storage})
 
