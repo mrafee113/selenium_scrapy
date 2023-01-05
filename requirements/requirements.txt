@@ -1,3 +1,2 @@
 Scrapy==2.6.1
-validators==0.20.0
 pyselenium-localstorage==0.1.1
